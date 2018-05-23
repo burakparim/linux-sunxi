@@ -19,12 +19,21 @@
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
+#include <linux/modules.h>
 
 int snd_soc_calc_frame_size(int sample_size, int channels, int tdm_slots)
 {
 	return sample_size * channels * tdm_slots;
 }
 EXPORT_SYMBOL_GPL(snd_soc_calc_frame_size);
+
+static const struct of_device_id soc_dummy_ids[] =
+{
+	              { .compatible = "linux,snd-soc-dummy"},
+	              { }
+};
+
+MODULE_DEVICE_TABLE(of, soc_dummy_ids);
 
 int snd_soc_params_to_frame_size(struct snd_pcm_hw_params *params)
 {
@@ -296,6 +305,13 @@ static const struct snd_soc_component_driver dummy_codec = {
 };
 
 #define STUB_RATES	SNDRV_PCM_RATE_8000_192000
+/* define STUB_RATES	(SNDRV_PCM_RATE_8000 | \
+ * 			SNDRV_PCM_RATE_16000 | \
+ * 			SNDRV_PCM_RATE_32000 | \
+ * 			SNDRV_PCM_RATE_44100 | \
+ * 			SNDRV_PCM_RATE_48000 | \
+ * 			SNDRV_PCM_RATE_96000 | \
+ * 			SNDRV_PCM_RATE_192000) */
 #define STUB_FORMATS	(SNDRV_PCM_FMTBIT_S8 | \
 			SNDRV_PCM_FMTBIT_U8 | \
 			SNDRV_PCM_FMTBIT_S16_LE | \
@@ -357,6 +373,7 @@ static int snd_soc_dummy_probe(struct platform_device *pdev)
 static struct platform_driver soc_dummy_driver = {
 	.driver = {
 		.name = "snd-soc-dummy",
+		.of_match_table = of_match_ptr(soc_dummy_ids),
 	},
 	.probe = snd_soc_dummy_probe,
 };
