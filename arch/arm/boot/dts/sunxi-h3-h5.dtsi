@@ -446,6 +446,26 @@
 				pins = "PA17";
 				function = "spdif";
 			};
+			
+			i2s0_bclk: i2s0@0 { 
+                                pins = "PA19";
+                                function = "i2s0";
+                        };
+
+                        i2s0_lrclk: i2s0@1 {
+                                pins = "PA18";
+                                function = "i2s0";
+                        };
+
+                        i2s0_sdo0: i2s0@3 {
+                                pins = "PA20";
+                                function = "i2s0";
+                        };
+
+                        i2s0_sdi: i2s0@4 {
+                                pins = "PA21";
+                                function = "i2s0";
+                        };
 
 			spi0_pins: spi0 {
 				pins = "PC0", "PC1", "PC2", "PC3";
@@ -614,7 +634,9 @@
 			dmas = <&dma 3>, <&dma 3>;
 			resets = <&ccu RST_BUS_I2S0>;
 			dma-names = "rx", "tx";
-			status = "disabled";
+			pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0> , <&i2s0_sdi>;
+                        pinctrl-names = "default";
+			status = "okay";
 		};
 
 		i2s1: i2s@1c22400 {
@@ -643,6 +665,32 @@
 			allwinner,codec-analog-controls = <&codec_analog>;
 			status = "disabled";
 		};
+
+                dummy_codec: dummy_codec {
+                        #sound-dai-cells = <0>;
+                        compatible = "linux,snd-soc-dummy";
+                        status = "okay";
+                };
+                
+                sound {
+                        compatible = "simple-audio-card";
+                        simple-audio-card,name = "dummy-i2s-PDM-out";
+                        simple-audio-card,format = "pdm";
+                        simple-audio-card,mclk-fs = <256>;
+			//simple-audio-card,bclk-fs = <256>;
+                        simple-audio-card,bitclock-master = <&i2s0>;
+                        simple-audio-card,frame-master = <&i2s0>;
+ 
+                        simple-audio-card,cpu {
+                                sound-dai = <&i2s0>;
+				//clocks = <&iosc>;
+                        };
+                
+                        simple-audio-card,codec {
+                                sound-dai = <&dummy_codec>;
+				//clocks = <&iosc>;
+                        };
+                }; 
 
 		uart0: serial@1c28000 {
 			compatible = "snps,dw-apb-uart";
