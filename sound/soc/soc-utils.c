@@ -19,7 +19,7 @@
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
-#include <linux/modules.h>
+#include <linux/module.h>
 
 int snd_soc_calc_frame_size(int sample_size, int channels, int tdm_slots)
 {
