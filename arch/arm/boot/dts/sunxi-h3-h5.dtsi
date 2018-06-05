@@ -636,6 +636,7 @@
 			dma-names = "rx", "tx";
 			pinctrl-0 = <&i2s0_bclk> , <&i2s0_lrclk> , <&i2s0_sdo0> , <&i2s0_sdi>;
                         pinctrl-names = "default";
+			allwinner,slot-width-override = <32>;
 			status = "okay";
 		};
 
@@ -677,18 +678,17 @@
                         simple-audio-card,name = "dummy-i2s-PDM-out";
                         simple-audio-card,format = "pdm";
                         simple-audio-card,mclk-fs = <256>;
-			//simple-audio-card,bclk-fs = <256>;
+			simple-audio-card,bclk-fs = <64>;
                         simple-audio-card,bitclock-master = <&i2s0>;
                         simple-audio-card,frame-master = <&i2s0>;
  
                         simple-audio-card,cpu {
                                 sound-dai = <&i2s0>;
-				//clocks = <&iosc>;
+				//allwinner,slot-width-override = <32>;
                         };
                 
                         simple-audio-card,codec {
                                 sound-dai = <&dummy_codec>;
-				//clocks = <&iosc>;
                         };
                 }; 
 
