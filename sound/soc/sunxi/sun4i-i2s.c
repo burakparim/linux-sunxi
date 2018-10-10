@@ -196,6 +196,8 @@ struct sun4i_i2s {
 	struct regmap_field	*field_rxchansel;
 
 	const struct sun4i_i2s_quirks	*variant;
+
+	unsigned int	slot_width;
 };
 
 struct sun4i_i2s_clk_div {
@@ -338,7 +340,7 @@ static int sun4i_i2s_set_clk_rate(struct sun4i_i2s *i2s,
 	if (i2s->variant->has_fmt_set_lrck_period)
 		regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
 				   SUN8I_I2S_FMT0_LRCK_PERIOD_MASK,
-				   SUN8I_I2S_FMT0_LRCK_PERIOD(32));
+				   SUN8I_I2S_FMT0_LRCK_PERIOD(word_size));
 
 	/* Set sign extension to pad out LSB with 0 */
 	regmap_field_write(i2s->field_fmt_sext, 0);
@@ -407,8 +409,9 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 	regmap_field_write(i2s->field_fmt_sr,
 			   sr + i2s->variant->fmt_offset);
 
-	return sun4i_i2s_set_clk_rate(i2s, params_rate(params),
-				      params_width(params));
+	return sun4i_i2s_set_clk_rate(dai, params_rate(params),
+				      i2s->slot_width ?
+				      i2s->slot_width : params_width(params));
 }
 
 static int sun4i_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
@@ -1003,7 +1006,7 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	struct sun4i_i2s *i2s;
 	struct resource *res;
 	void __iomem *regs;
-	int irq, ret;
+	int irq, ret, val;
 
 	i2s = devm_kzalloc(&pdev->dev, sizeof(*i2s), GFP_KERNEL);
 	if (!i2s)
@@ -1069,6 +1072,12 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 
 	i2s->capture_dma_data.addr = res->start + SUN4I_I2S_FIFO_RX_REG;
 	i2s->capture_dma_data.maxburst = 8;
+
+	if(!of_property_read_u32(pdev->dev.of_node,
+				"allwinner,slot-width-override", &val)) {
+		if(val >= 8 && val <= 32)
+			i2s->slot_width =val;
+	}
 
 	pm_runtime_enable(&pdev->dev);
 	if (!pm_runtime_enabled(&pdev->dev)) {

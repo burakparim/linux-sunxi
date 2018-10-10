@@ -25,6 +25,11 @@ Required properties for the following compatibles:
 	- "allwinner,sun8i-h3-i2s"
 - resets: phandle to the reset line for this codec
 
+Optional properties:
+- "allwinner,slot-width-override" : if this property is present on the DT, dai is
+				configured to extend the slot width to the specified
+				value. Value range is min. 8, max. 32.
+
 Example:
 
 i2s0: i2s@01c22400 {
