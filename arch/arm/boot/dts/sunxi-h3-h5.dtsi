@@ -546,8 +546,23 @@
 				drive-strength = <40>;
 			};
 
-			i2s0_pins: i2s0 {
-				pins = "PA18", "PA19", "PA20", "PA21";
+			i2s0_bclk: i2s0@0 {
+				pins = "PA19";
+				function = "i2s0";
+			};
+
+			i2s0_lrclk: i2s0@1 {
+				pins = "PA18";
+				function = "i2s0";
+			};
+
+			i2s0_sdo0: i2s0@3 {
+				pins = "PA20";
+				function = "i2s0";
+			};
+
+			i2s0_sdi: i2s0@4 {   /* update naming to <i2s0_sdo1> for 2 output pins if that operation mode is supported */
+				pins = "PA21";
 				function = "i2s0";
 			};
 
@@ -781,7 +796,7 @@
  			clock-names = "apb", "mod";
  			resets = <&ccu RST_BUS_I2S0>;
  			pinctrl-names = "default";
- 			pinctrl-0 = <&i2s0_pins>;
+ 			pinctrl-0 = <&i2s0_bclk>, <&i2s0_lrclk>, <&i2s0_sdo0>, <&i2s0_sdi>;
  			dmas = <&dma 3>, <&dma 3>;
  			dma-names = "rx", "tx";
  			status = "disabled";
