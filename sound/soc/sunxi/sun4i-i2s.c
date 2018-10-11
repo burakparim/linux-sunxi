@@ -424,7 +424,14 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 	case 16:
 		width = DMA_SLAVE_BUSWIDTH_2_BYTES;
 		break;
+	case 20:
+	case 24:
+	case 32:
+		width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+		break;
 	default:
+		dev_err(dai->dai, "Unsupported physical sample width: %d\n",
+				params_physical_width(params));
 		return -EINVAL;
 	}
 	i2s->playback_dma_data.addr_width = width;
@@ -434,8 +441,21 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 		sr = 0;
 		wss = 0;
 		break;
-
+	case 20:
+		sr = 1;
+		wss = 1;
+		break;
+	case 24:
+		sr = 2;
+		wss = 2;
+		break;
+	case 32:
+		sr = 4;
+		wss = 4;
+		break;
 	default:
+		dev_err(dai->dev, "Unsupported sample width: %d\n",
+				params_width(params));
 		return -EINVAL;
 	}
 
@@ -733,6 +753,13 @@ static int sun4i_i2s_dai_probe(struct snd_soc_dai *dai)
 	return 0;
 }
 
+#define SUN4I_FORMATS	(SNDRV_PCM_FMTBIT_S16_LE | \
+		SNDRV_PCM_FMTBIT_S20_3LE | \
+		SNDRV_PCM_FMTBIT_s24_LE)
+
+#define SUN8I_FORMATS	(SUN4I_FORMATS | \
+		SNDRV_FMTBIT_S32_LE)
+
 static struct snd_soc_dai_driver sun4i_i2s_dai = {
 	.probe = sun4i_i2s_dai_probe,
 	.capture = {
@@ -740,14 +767,14 @@ static struct snd_soc_dai_driver sun4i_i2s_dai = {
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+		.formats = SUN4I_FORMATS,
 	},
 	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+		.formats = SUN4I_FORMATS,
 	},
 	.ops = &sun4i_i2s_dai_ops,
 	.symmetric_rates = 1,
@@ -1037,6 +1064,7 @@ static int sun4i_i2s_init_regmap_fields(struct device *dev,
 static int sun4i_i2s_probe(struct platform_device *pdev)
 {
 	struct sun4i_i2s *i2s;
+	struct snd_soc_dai_driver *soc_dai; /* not clear how and why it is needed */
 	struct resource *res;
 	void __iomem *regs;
 	int irq, ret, val;
@@ -1117,6 +1145,11 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 		ret = sun4i_i2s_runtime_resume(&pdev->dev);
 		if (ret)
 			goto err_pm_disable;
+	}
+
+	if (i2s->variant->has_fmt_set_lrck_period) {
+		 soc_dai->playback.formats = SUN8I_FORMATS;
+		 soc_dai->capture.formats = SUN8I_FORMATS;
 	}
 
 	ret = devm_snd_soc_register_component(&pdev->dev,
